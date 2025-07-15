@@ -1,0 +1,14 @@
+scikit-learn
+torchsummary
+numpy
+opencv_contrib_python
+torch==1.12.1
+torchvision==0.13.1
+tqdm
+torchinfo==1.8.0
+thop
+
+
+
+
+
