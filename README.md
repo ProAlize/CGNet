@@ -1,23 +1,11 @@
 # Contrast gas detection: Improving infrared gas semantic segmentation with static background
 
-# *Accepted to EAAI (JCR Q1)* 🎉🎉🥳🥳
-
 ![Paper](./assets/paper.png)
 
 
 ### [Paper (Latest version)](https://www.sciencedirect.com/science/article/pii/S0952197625016069?ref=pdf_download&fr=RR-2&rr=95f32cf71b94d029#page=1.00&gsr=0) | [CGD dataset](#training-dataset-preparation)
 
 ----------------------------------------------------------
-
-## Authors
-
-- [Jue Wang*](https://a-new-b.github.io/)<sup>1,2</sup>, Jianzhi Fan*<sup>1,3</sup>, [Tianshuo Yuan](https://proalize.github.io/)<sup>1,3</sup>, Dong Luo<sup>1</sup>, Guohua Jiao<sup>1</sup>, Wei Chen<sup>1</sup>
-
-- <sup>1</sup>[Shenzhen Institutes of Advanced Technology, Chinese Academy of Sciences](https://www.siat.ac.cn/), 
-- <sup>2</sup>[Southern University of Science and Technology](www.sustech.edu.cn/en/) [Jue and Jianzhi contribute equally to this work.]
-- <sup>3</sup>[University of Chinese Academy of Sciences](https://www.ucas.ac.cn/)
-
----------------------------------------------------------
 
 ## An overview of our CGNet
 ![An overview of our CGNet](./assets/Architecture%20of%20CGNet.png)
