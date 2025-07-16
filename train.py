@@ -59,34 +59,25 @@ scaler = GradScaler()
 best_models = []
 
 def save_best_models(epo, model, iou, f1, weight_dir, best_models, max_models=5):
-    """
-    保存模型，如果其 IoU 和 F1 分数足够好，则将其添加到最佳模型列表中。
-    只保留最多 max_models 个模型。
-    """
+
     checkpoint_model_file = os.path.join(weight_dir, f'{epo}_latest.pth')
     
-    # 检查是否需要保存新的模型
     if len(best_models) < max_models:
-        # 如果模型数少于 max_models，直接保存
         torch.save(model.state_dict(), checkpoint_model_file)
         best_models.append((iou, f1, checkpoint_model_file))
-        print(f"模型已保存: {checkpoint_model_file}, IoU: {iou}, F1: {f1}")
+        print(f"model saved: {checkpoint_model_file}, IoU: {iou}, F1: {f1}")
     else:
-        # 查找最差的模型
         min_iou, min_f1, _ = min(best_models, key=lambda x: (x[0], x[1]))
         if iou > min_iou or (iou == min_iou and f1 > min_f1):
-            # 删除最差的模型
             _, _, worst_model_path = min(best_models, key=lambda x: (x[0], x[1]))
             if os.path.exists(worst_model_path):
                 os.remove(worst_model_path)
-                print(f"已删除模型: {worst_model_path}")
+                print(f"model deleted: {worst_model_path}")
 
-            # 保存新的模型
             torch.save(model.state_dict(), checkpoint_model_file)
             best_models.append((iou, f1, checkpoint_model_file))
-            print(f"模型已保存: {checkpoint_model_file}, IoU: {iou}, F1: {f1}")
+            print(f"model saved: {checkpoint_model_file}, IoU: {iou}, F1: {f1}")
         
-        # 只保留 max_models 个最佳模型
         best_models.sort(key=lambda x: (x[0], x[1]), reverse=True)
         best_models = best_models[:max_models]
     
@@ -100,13 +91,12 @@ def train(epo, model, train_loader, optimizer):
         gas = Variable(gas).cuda(args.gpu)
         labels = Variable(labels).cuda(args.gpu)
         with autocast():
-            start_t = time.time()  # time.time() returns the current time
+            start_t = time.time()  
             optimizer.zero_grad()
             DiceLoss_fn = DiceLoss(mode='multiclass')
             SoftCrossEntropy_fn = SoftCrossEntropyLoss(smooth_factor=0.1)
             criterion = JointLoss(first=DiceLoss_fn, second=SoftCrossEntropy_fn,
                                   first_weight=0.5, second_weight=0.5).cuda()
-            # modality_reduce_loss = MRLoss().cuda()
             logits_S, logits_T, fuse, bg, gas = model(bg, gas)
             loss_1 = criterion(logits_S, labels)
             loss_2 = criterion(logits_T, labels)
@@ -136,7 +126,6 @@ def testing2(epo, model, test_loader):
             bg = Variable(bg).cuda(args.gpu)
             gas = Variable(gas).cuda(args.gpu)
             labels = Variable(labels).cuda(args.gpu)
-            # BBS使用双输出
             logit, logits,_,_,_ = model(bg, gas)
             logit_mix = (logit + logits)
             label = labels.cpu().numpy().squeeze().flatten()
@@ -264,8 +253,7 @@ if __name__ == '__main__':
         print('\ntrain %s, epo #%s begin...' % (args.model_name, epo))
         train(epo, model, train_loader, optimizer)
         checkpoint_model_file = os.path.join(weight_dir, str(epo) + '_latest.pth')
-        # testing2(epo, model, test_loader)
-        # torch.save(model.state_dict(), checkpoint_model_file)
+
         precision, recall, IoU, F1, F2 = testing2(epo, model, test_loader)
         IoU = IoU[-1]
         F1 = F1[-1]

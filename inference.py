@@ -91,12 +91,6 @@ if __name__ == '__main__':
             bg_path = os.path.join(args.data_dir,dir,"bg.png")
             gas_path = os.path.join(args.data_dir,dir,"gas.png")
 
-    # bg_path = "dataset\\test\\images\\00821\\bg.png"
-    # gas_path = "dataset\\test\\images\\00821\\gas.png"
-
-    # bg_path = "dataset\\test\\images\\01225\\bg.png"
-    # gas_path = "dataset\\test\\images\\01225\\gas.png"
-
             bg = np.asarray(PIL.Image.open(bg_path).convert('L'), dtype=np.float32)
             gas = np.asarray(PIL.Image.open(gas_path).convert('L'), dtype=np.float32)
             origin = np.asarray(PIL.Image.open(gas_path).convert('L').resize((640, 512)), dtype=np.uint8)
@@ -121,21 +115,11 @@ if __name__ == '__main__':
                     img[pred == cid] = palette[cid]
 
             thermal = cv2.cvtColor(origin,cv2.COLOR_GRAY2BGR)
-            # 创建掩膜（灰度值不为0的部分作为mask）
-            # mask = cv2.inRange(img, 1, 255)  # 非黑色部分的掩膜
 
-            # 将掩膜扩展为三通道（与图片形状匹配）
-            # mask_bgr = cv2.merge([mask, mask, mask])
-
-            # 定义透明度 alpha（范围：0-1）
             alpha = 0.5
 
-            # 初始化输出图像，直接复制目标图片
             output = thermal.copy()
 
-            # 在 mask 区域内进行逐像素透明度混合
-            # output[img > 0] = (thermal[img > 0] // 2 + img[img > 0] // 2).astype(np.uint8)
             output[img > 0] = cv2.addWeighted(thermal,0.5,img,0.5,0)[img > 0]
 
-            # img = cv2.addWeighted(thermal,0.5,img,0.5,0)
             cv2.imwrite(f"save_test/{dir}_pred.png",output)

@@ -5,10 +5,7 @@ import torch.nn.functional as F
 from torchinfo import summary
 from thop import profile
 
-# from CrossViewAttention import CMAtt,CMAtt2
-# from model.CrossViewAttention import CMAtt,CMAtt2
-# from model.fuseDiff import FusionNetwork
-# from fuseDiff import FusionNetwork
+
 
 class Att_Enhance(nn.Module):
 
@@ -129,34 +126,16 @@ class GCM(nn.Module):
         self.branch3_2 = BasicConv2d(
             out_channel, out_channel, kernel_size=(7, 1), padding=(3, 0))
 
-        # self.se = Att_avg_pool(out_channel, 4)
-        # self.catt_list =nn.ModuleList()
-        # for i in range(4):
-        #     self.catt_list.append(Channel_Attention(out_channel))
-        # self.attncat = AttentionConcat()
+
         self.catt = Channel_Attention(4*out_channel,4)
         self.conv_cat = BasicConv2d(4*out_channel, out_channel, 3, padding=1)
         self.conv_res = nn.Conv2d(in_channel, out_channel, kernel_size=1)
 
     def forward(self, x):
         x0 = self.branch0(x)
-        # x0 = self.se(x0)
         x1 = self.branch1_2(self.branch1_1(self.branch1(x)))
-        # x1 = self.se(x1)
         x2 = self.branch2_2(self.branch2_1(self.branch2(x)))
-        # x2 = self.se(x2)
         x3 = self.branch3_2(self.branch3_1(self.branch3(x)))
-        # x3 = self.se(x3)
-
-        # x_list = [x0,x1,x2,x3]
-
-        # for i in range(4):
-        #     catt = self.catt_list[i]
-        #     x_list[i] = catt(x_list[i])
-        
-        # x_cat =self.attncat(x_list)
-        # x_cat = self.conv_cat(x_cat)
-        # x_add = x0 + x1 + x2 + x3
 
         x_cat = torch.cat((x0, x1, x2, x3), 1)
         x_cat = x_cat * self.catt(x_cat)
@@ -200,7 +179,6 @@ class aggregation_init(nn.Module):
         x = self.conv(self.conv4(x3_2))
         return x
 
-# Refinement flow
 
 class aggregation_final(nn.Module):
 
@@ -301,8 +279,7 @@ class FA_encoder(nn.Module):
         # layer0
         ######################################################################
 
-        combined = torch.cat((bg, gas), dim=0)  # 拼接后的形状 (batch_size_bg + batch_size_gas, channels, height, width)
-        # 获取 bg 和 gas 的批次大小
+        combined = torch.cat((bg, gas), dim=0)  
         batch_size_bg = bg.size(0)
         batch_size_gas = gas.size(0)
 
@@ -315,8 +292,8 @@ class FA_encoder(nn.Module):
         combined = self.encoder_maxpool(combined)
 
         ######################################################################
-        bg_out = combined[:batch_size_bg]  # 分离出 bg 的部分
-        gas_out = combined[batch_size_bg:batch_size_bg + batch_size_gas]  # 分离出 gas 的部分
+        bg_out = combined[:batch_size_bg]  
+        gas_out = combined[batch_size_bg:batch_size_bg + batch_size_gas]  
         
         fuse0 = self.ae0(bg_out,gas_out)
 
@@ -324,35 +301,34 @@ class FA_encoder(nn.Module):
         # layer1
         ######################################################################
         combined = self.encoder_layer1(combined)
-        bg1 = combined[:batch_size_bg]  # 分离出 bg 的部分
-        gas1 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  # 分离出 gas 的部分
+        bg1 = combined[:batch_size_bg]  
+        gas1 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  
         fuse1 = self.ae1(gas1,bg1)
         ######################################################################
         # layer2
         ######################################################################
         combined = self.encoder_layer2(combined)
-        bg2 = combined[:batch_size_bg]  # 分离出 bg 的部分
-        gas2 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  # 分离出 gas 的部分
+        bg2 = combined[:batch_size_bg]  
+        gas2 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  
         fuse2 = self.ae2(gas2,bg2)
         ######################################################################
         # layer3
         ######################################################################
         combined = self.encoder_layer3(combined)
-        bg3 = combined[:batch_size_bg]  # 分离出 bg 的部分
-        gas3 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  # 分离出 gas 的部分
+        bg3 = combined[:batch_size_bg]  
+        gas3 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  
         fuse3 = self.ae3(gas3,bg3)
         ######################################################################
         # layer4
         ######################################################################
         combined = self.encoder_layer4(combined)
-        bg4 = combined[:batch_size_bg]  # 分离出 bg 的部分
-        gas4 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  # 分离出 gas 的部分
+        bg4 = combined[:batch_size_bg]  
+        gas4 = combined[batch_size_bg:batch_size_bg + batch_size_gas]  
         fuse4 = self.ae4(gas4,bg4)
         ######################################################################
         fuse = [fuse0, fuse1, fuse2, fuse3, fuse4]
         gas = [gas, gas1, gas2, gas3, gas4]
         bg = [bg, bg1, bg2, bg3, bg4]
-        # weight = [weight0,weight1,weight2,weight3,weight4]
         return fuse, gas, bg
 
 class TransBottleneck(nn.Module):
@@ -426,7 +402,6 @@ class Cascaded_decoder(nn.Module):
         self.agant1 = self._make_agant_layer(channel*3, channel)
         self.deconv1 = self._make_transpose_layer(
             TransBottleneck, channel, 3, stride=2)
-        # self.inplanes = channel/2
         self.agant2 = self._make_agant_layer(channel, channel)
         self.deconv2 = self._make_transpose_layer(
             TransBottleneck, channel, 3, stride=2)
@@ -484,10 +459,6 @@ class Cascaded_decoder(nn.Module):
         x0_2 = self.rfb0_2(x)
         x1_2 = self.rfb1_2(x1)
         x2_2 = self.rfb2_2(x2)
-        # ux5_2 = self.upsample2(x5_2)
-        ##############################################################################
-        # feature_map = ux5_2 + ux1_2 + ux2_1 + ux3_1 + ux0_2 + ux4_1
-        # feature_map = self.miniaspp(feature_map)
         ##############################################################################
         hight_output = self.upsample(self.agg1(x4_1, x3_1, x2_1))
         ##############################################################################
@@ -495,7 +466,6 @@ class Cascaded_decoder(nn.Module):
         ##############################################################################
         # PTM module
         ##############################################################################
-        # y = feature_map
         y = self.agg2(x2_2,x1_2,x0_2)
         y = self.agant1(y)
         y = self.deconv1(y)
@@ -526,7 +496,6 @@ def unit_test():
     bg = torch.randn(num_minibatch, 1, 512, 640).cuda(0)
     gas = torch.randn(num_minibatch, 1, 512, 640).cuda(0)
     RTCAN_Net = GasSegNet(2).cuda(0)
-    # input = torch.cat((bg, gas), dim=1)
     out = RTCAN_Net(bg, gas)
     print(out)
 
@@ -541,12 +510,9 @@ def model_stat():
     from thop import profile
 
     flops, params = profile(model, inputs=(gas,bg, ))
-    # flops, params = clever_format([flops, params], "%.3f")
     print("FLOPs=", str(flops/1e9) +'{}'.format("G"))
     print("params=", str(params/1e6)+'{}'.format("M"))
 
 
 if __name__ == '__main__':
-    # summarize()
-    # unit_test()
     model_stat()

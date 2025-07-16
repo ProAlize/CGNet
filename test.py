@@ -37,14 +37,12 @@ args = parser.parse_args()
 def testing2(model, test_loader):
     model.eval()
     conf_total = np.zeros((args.n_class, args.n_class))
-    # label_list = ["unlabeled", "gas"]
-    # testing_results_file = os.path.join(weight_dir, 'testing_results.txt')
+
     with torch.no_grad():
         for it, (bg, gas, labels, names) in enumerate(test_loader):
             bg = Variable(bg).cuda(args.gpu)
             gas = Variable(gas).cuda(args.gpu)
             labels = Variable(labels).cuda(args.gpu)
-            # BBS使用双输出
             logit, logits,_,_,_ = model(bg, gas)
             logit_mix = (logit + logits)
             label = labels.cpu().numpy().squeeze().flatten()
@@ -53,18 +51,6 @@ def testing2(model, test_loader):
                                     0, 1])
             conf_total += conf
     precision, Acc, IoU, F1, F2, _ = compute_results2(conf_total)
-    # if epo == 0:
-    #     with open(testing_results_file, 'w') as f:
-    #         # f.write(
-    #         #     "# epoch: unlabeled, car, person, bike, curve, car_stop, guardrail, color_cone, bump, average(nan_to_num). (Acc %, IoU %)\n")
-    #         f.write(
-    #             "# epoch: unlabeled, gas, average(nan_to_num), (precision %,(recall)Acc %, IoU %, F1 ,F2)\n")
-    # with open(testing_results_file, 'a') as f:
-    #     f.write(str(epo) + ': ')
-    #     for i in range(len(precision)):
-    #         f.write('%0.4f, %0.4f, %0.4f, %0.4f, %0.4f|' % (100*precision[i], 100 * recall[i], 100 * IoU[i], 100* F1[i], 100* F2[i]))
-    #     f.write('%0.4f, %0.4f, %0.4f, %0.4f, %0.4f| \n' % (
-    #         100 * np.mean(np.nan_to_num(precision)), 100 * np.mean(np.nan_to_num(recall)), 100 * np.mean(np.nan_to_num(IoU)), 100 * np.mean(np.nan_to_num(F1)), 100 * np.mean(np.nan_to_num(F2))))
     return precision, Acc, IoU, F1, F2
 
 if __name__ == '__main__':
@@ -94,10 +80,7 @@ if __name__ == '__main__':
     else:
         sys.exit('no such type model.')
 
-    # 遍历文件列表
-    # for index,model_name in tqdm(enumerate(model_list)):
-        # 检查文件名是否以 '.pth' 结尾
-    # if model_name.endswith('.pth'):
+
     model_file = os.path.join(weight_dir, args.file_name)
     model = GasSegNet(args.n_class,num_resnet_layers)
     if args.gpu >= 0:
@@ -119,6 +102,5 @@ if __name__ == '__main__':
             continue
         own_state[name].copy_(param)
     print('done!')
-    # testing2(num, model, test_loader)
     precision, Acc, IoU, F1, F2 = testing2(model, test_loader)   
     print(Acc[1], IoU[1], F1[1])

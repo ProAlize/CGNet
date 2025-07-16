@@ -12,14 +12,7 @@ class Gas_dataset(Dataset):
         assert split in ['train', 'val', 'test', 'test_day', 'test_night', 'val_test', 'most_wanted'], \
             'split must be "train"|"val"|"test"|"test_day"|"test_night"|"val_test"|"most_wanted"'  # test_day, test_night
 
-        # with open(os.path.join(data_dir, split+'.txt'), 'r') as f:
-        #     blacklist = open(os.path.join(data_dir, 'blacklist.txt')).readlines()
-        #     self.data =[]
-        #     for name in f.readlines():
-        #         if name not in blacklist:
-        #             self.data.append(name.strip())
-        #         else:
-        #             print(name.strip())
+
         image_path = os.path.join(data_dir,"images")
         self.data = sorted([name for name in os.listdir(image_path) if os.path.isdir(os.path.join(image_path, name))])
         random.seed(seed)
@@ -46,14 +39,12 @@ class Gas_dataset(Dataset):
         gt_path = os.path.join(self.label_path, name, "gt.png")
         label = np.asarray(PIL.Image.open(gt_path).resize((self.input_w, self.input_h)))
         label = np.where(label > 128, 1, 0).astype(np.uint8)
-        # label = np.expand_dims(label, axis=-1)
         return label
 
 
     def __getitem__(self, index):
         name  = self.data[index]
         bg,gas = self.read_thermal_image(name)
-        # image = self.read_image(name, 'ablation') # 消融实验 无可见光
         label = self.read_label(name)
         for func in self.transform:
             bg, gas, label = func(bg, gas, label)
@@ -67,9 +58,7 @@ class Gas_dataset(Dataset):
         gas = np.expand_dims(gas, axis=-1).transpose((2,0,1))/255
         gas = torch.tensor(gas)
         label = np.asarray(PIL.Image.fromarray(label).resize((self.input_w, self.input_h), resample=PIL.Image.NEAREST), dtype=np.int64)
-        # label = np.expand_dims(label, axis=-1)
         label = torch.tensor(label)
-        # label = np.asarray(PIL.Image.fromarray(label).resize((self.input_w, self.input_h)), dtype=np.int64)
         return bg, gas, label, name
 
     def __len__(self):
